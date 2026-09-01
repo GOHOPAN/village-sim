@@ -1,0 +1,22 @@
+# Normalize line endings on checkin, leave working tree to the OS
+* text=auto
+
+# Explicit text
+*.js    text
+*.jsx   text
+*.py    text
+*.json  text
+*.md    text
+*.css   text
+*.html  text
+*.tmx   text
+*.tiled-project text
+
+# Binary assets
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.svg   binary
+*.pdf   binary
+*.aseprite binary

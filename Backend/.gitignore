@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.env
+village.db
+chroma_data/
+uvicorn.log
