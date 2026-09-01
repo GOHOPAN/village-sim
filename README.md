@@ -1,45 +1,87 @@
 # Village Simulation
 
-React + Phaser 3 프론트엔드와 FastAPI + LLM 백엔드로 만드는 2D 마을 시뮬레이션 게임.
-"생성형 에이전트"(기억 스트림 → 성찰 → 계획/반응) 방식으로 NPC들이 자율적으로 살아가고,
-플레이어는 대화 / 은신 / 전투 / 채집 / 상점 / 도박 등으로 마을에 개입한다.
+This project is a 2D web game that simulates a small village.
+Every NPC is LLM-driven, each with its own personality, daily routine, and stats.
+NPCs remember what the player does and react based on those memories.
 
-> ⚠️ **개발 중** — 아직 미완성 프로젝트입니다.
+> ⚠️ **WIP** — not yet playable end-to-end.
 
-## 저장소 구조 (모노레포)
+## Goal
 
-| 경로 | 내용 |
+My goal for this project is to implement a village that is fully run by generative agents while still leaving room for the player to intervene.
+The player can choose to help the village or harm it.
+Their actions ripple outward, shifting individual NPCs' attitudes and eventually the mood of the whole village.
+
+## Features (planned / in progress)
+
+- **Free-text conversations** with NPCs — TRPG-style: type anything, the NPC reacts in character
+- **Generative-agent loop** — memory stream → nightly reflection → LLM-planned daily routines
+- **Rumor propagation** — events spread NPC-to-NPC, with personality-driven distortion
+- **Stealth & eavesdropping** — hide in bushes, stay out of NPC line-of-sight, listen in
+- **Combat, gathering, shops, gambling**
+- **Time system** — day/night cycle with time-skip and a forced pass-out in the small hours
+- **World events** — fire, wedding, funeral, and more, temporarily overriding NPC routines
+
+## Architecture
+
+- **Frontend** (React + Phaser 3) renders the map, player, NPCs, and UI, and talks to the backend over REST.
+- **Backend** (FastAPI) holds the simulation:
+  - **Relational DB** (SQLAlchemy — SQLite by default, MySQL via `DATABASE_URL`) for stats, inventory, relationships, and rumor IDs.
+  - **Vector DB** (ChromaDB) for episodic NPC memories and reflections, scored by *recency × importance × relevance*.
+  - **LLM** — an OpenAI-compatible client, split into a "game master" brain (reflection / routine / eavesdrop) and an NPC-dialogue brain. With no API key it falls back to deterministic stubs, so the whole stack runs without cost.
+
+## Tech stack
+
+| Layer | Stack |
 | --- | --- |
-| [`Frontend/`](Frontend/README.md) | React 19 + Phaser 3.90 + Vite 클라이언트 |
-| [`Backend/`](Backend/README.md) | FastAPI + SQLAlchemy + ChromaDB + LLM 서버 |
-| [`PROJECT_STATUS.md`](PROJECT_STATUS.md) | 현재 상태 스냅샷 (매 작업 세션 시작 시 참고) |
-| [`CHANGELOG_ARCHIVE.md`](CHANGELOG_ARCHIVE.md) | 전체 변경 이력 (append-only) |
-| `untitled.tmx` | Tiled 맵 에디터 소스 파일 |
+| Frontend | React 19, Phaser 3.90 (arcade physics), phaser-raycaster, easystar.js (A*), Vite |
+| Backend | FastAPI, Pydantic v2, SQLAlchemy 2, ChromaDB, OpenAI-compatible LLM API |
+| Tooling | Tiled (map editor), oxlint |
 
-## 빠른 실행
+## Credits
+
+This project is inspired by the research paper [*Generative Agents: Interactive Simulacra of Human Behavior*](https://arxiv.org/abs/2304.03442) (Park et al., 2023).
+This project was mostly built through vibe coding with Claude.
+The game uses free third-party art assets:
+{To be added}
+
+## Repository structure
+
+| Directory | Description |
+| --- | --- |
+| [`Frontend/`](Frontend/README.md) | React 19 + Phaser 3.90 + Vite client |
+| [`Backend/`](Backend/README.md) | FastAPI + SQLAlchemy + ChromaDB + LLM server |
+
+## Development setup
+
+Each side runs independently. See [`Frontend/README.md`](Frontend/README.md) and [`Backend/README.md`](Backend/README.md) for the full instructions; the short version:
 
 ```bash
-# 1) Backend (먼저 실행 — http://127.0.0.1:8000)
+# Backend — http://127.0.0.1:8000
 cd Backend
-python -m venv venv && source venv/Scripts/activate   # Windows: venv\Scripts\activate
+python -m venv venv
+./venv/Scripts/activate            # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 uvicorn app.main:app --reload --port 8000
 
-# 2) Frontend (http://localhost:5173)
+# Frontend — http://localhost:5173
 cd Frontend
 npm install
 cp .env.example .env
 npm run dev
 ```
 
-자세한 내용은 각 폴더의 `README.md`를 참고.
+The map will not render without the art assets and `village.json` (see below).
 
-## 저장소에 포함되지 않는 것 (`.gitignore`)
+## Not included in this repository
 
-- **아트 에셋** (`Tilesets/`, `Frontend/public/tilesets/`) — 서드파티 무료 에셋팩(Craftpix, itch.io 등)
-  으로 재배포가 제한되어 저장소에 넣지 않는다. 로컬에서 각 팩을 받아 해당 경로에 배치해야 맵이 렌더된다.
-- **파생 맵** (`Frontend/public/maps/village.json`) — `untitled.tmx`에서 Tiled로 export하는 파생 파일:
-  `"C:\Program Files\Tiled\tiled.exe" --export-map json untitled.tmx Frontend/public/maps/village.json`
-- **런타임 데이터** — `Backend/village.db`, `Backend/chroma_data/` (첫 기동 시 자동 생성/시드)
-- **비밀값** — `.env` (각 폴더의 `.env.example` 복사해서 사용)
+- **Game Assets** (`Tilesets/`, `Frontend/public/tilesets/`) — third-party asset packs that can't be redistributed, so the map won't render from a fresh clone; supply your own tilesets.
+- **Map** — the Tiled source (`untitled.tmx`) and its JSON export (`Frontend/public/maps/village.json`) are not published for now.
+- **Runtime Data** (`Backend/village.db`, `Backend/chroma_data/`) — auto-created and seeded on first launch.
+- **Secrets** (`.env`) — copy the `.env.example` in each folder to `.env` and fill it in.
+
+## License
+
+Not decided yet — until a `LICENSE` file is added, all rights are reserved by the author.
+Third-party assets (not included in this repository) remain under their original licenses.

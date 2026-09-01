@@ -36,8 +36,15 @@ uvicorn.log
 Tilesets/
 Frontend/public/tilesets/
 
-# --- Derived Tiled map export (regenerate from untitled.tmx) ---
+# --- Tiled map: source + derived export (not published for now) ---
+untitled.tmx
+untitled.tiled-project
 Frontend/public/maps/village.json
+
+# --- Working notes for Claude Code sessions (not published) ---
+PROJECT_STATUS.md
+CHANGELOG_ARCHIVE.md
+ㄱㅍ.txt
 
 # --- Backups ---
 *.bak
